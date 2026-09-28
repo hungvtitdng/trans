@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+.DS_Store
+Thumbs.db
+*.log
+
+# Không bao giờ commit key hay file bí mật
+settings.json
+*.pem
+*.p12
+*.key
+.env
+.env.*
+service-account*.json
+*-credentials.json
+credentials*.json

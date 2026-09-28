@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob: mediastream:; connect-src 'self'; object-src 'none'; base-uri 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phụ đề họp</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="app-name">Phụ đề họp</span>
+        <span class="pair" id="pair">EN → VI</span>
+      </div>
+      <div class="usage" id="usage" title="Số phút âm thanh đã gửi và chi phí ước tính">0,0 phút · ≈ $0.00</div>
+      <span class="status" id="status" data-state="idle">Sẵn sàng</span>
+      <div class="top-actions">
+        <button type="button" id="settingsBtn" class="btn">Cài đặt</button>
+        <button type="button" id="startBtn" class="btn primary">Bắt đầu</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="stage" aria-live="polite">
+        <p class="prev-line" id="prevLine"></p>
+        <p class="source-line" id="sourceLine">Bấm “Bắt đầu” để hiện phụ đề.</p>
+        <p class="current-line" id="currentLine"></p>
+        <div class="stage-foot">
+          <div class="meter" title="Mức âm lượng"><div class="meter-fill" id="meterFill"></div></div>
+          <button type="button" id="overlayBtn" class="btn ghost">Phụ đề nổi</button>
+        </div>
+      </section>
+
+      <p class="error-banner" id="errorBanner" hidden></p>
+
+      <section class="controls">
+        <label>Nguồn âm thanh
+          <select id="source">
+            <option value="system">Âm thanh máy tính</option>
+            <option value="mic">Micro / thiết bị thu</option>
+            <option value="both">Cả hai</option>
+          </select>
+        </label>
+        <label>Thiết bị thu
+          <select id="device"><option value="">Mặc định</option></select>
+        </label>
+        <label>Người nói
+          <select id="speakerLang">
+            <option value="en-US">Tiếng Anh (Mỹ)</option>
+            <option value="en-GB">Tiếng Anh (Anh)</option>
+            <option value="en-AU">Tiếng Anh (Úc)</option>
+            <option value="en-IN">Tiếng Anh (Ấn Độ)</option>
+            <option value="en-SG">Tiếng Anh (Singapore)</option>
+            <option value="ja-JP">Tiếng Nhật</option>
+            <option value="ko-KR">Tiếng Hàn</option>
+            <option value="cmn-Hans-CN">Tiếng Trung (giản thể)</option>
+            <option value="vi-VN">Tiếng Việt</option>
+          </select>
+        </label>
+        <label>Dịch sang
+          <select id="targetLang">
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">Tiếng Anh</option>
+            <option value="ja">Tiếng Nhật</option>
+            <option value="ko">Tiếng Hàn</option>
+            <option value="zh-CN">Tiếng Trung (giản thể)</option>
+          </select>
+        </label>
+        <label>Cỡ chữ
+          <input type="range" id="fontSize" min="18" max="64" step="2" />
+        </label>
+      </section>
+
+      <section class="transcript">
+        <div class="transcript-head">
+          <h2>Biên bản song ngữ</h2>
+          <div class="transcript-actions">
+            <button type="button" class="btn small" id="copyBtn">Sao chép</button>
+            <button type="button" class="btn small" id="saveTxtBtn">Lưu .txt</button>
+            <button type="button" class="btn small" id="saveSrtBtn">Lưu .srt</button>
+            <button type="button" class="btn small danger" id="clearBtn">Xoá</button>
+          </div>
+        </div>
+        <ol class="transcript-list" id="transcriptList">
+          <li class="example">
+            <time>09:00:05</time>
+            <div><p class="src">Good morning everyone, let's get started.</p><p class="tr">Chào buổi sáng mọi người, chúng ta bắt đầu nhé.</p></div>
+            <span class="tag">ví dụ</span>
+          </li>
+          <li class="example">
+            <time>09:00:11</time>
+            <div><p class="src">First, a quick update on the release schedule.</p><p class="tr">Trước tiên, cập nhật nhanh về lịch phát hành.</p></div>
+            <span class="tag">ví dụ</span>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" class="settings" id="settingsForm">
+        <h2>Cài đặt</h2>
+
+        <fieldset>
+          <legend>Key Google Cloud</legend>
+          <p class="key-summary" id="keySummary">Chưa có key.</p>
+          <label>API key
+            <input type="password" id="apiKeyInput" autocomplete="off" spellcheck="false" placeholder="Dán API key rồi nhấn Enter" />
+          </label>
+          <div class="row">
+            <button type="button" class="btn" id="saveKeyBtn">Lưu key</button>
+            <button type="button" class="btn" id="chooseJsonBtn">Chọn file JSON service account…</button>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" id="testKeyBtn">Kiểm tra key</button>
+            <button type="button" class="btn danger" id="clearKeyBtn">Xoá key</button>
+            <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/lay-key-google.md" class="ext-link">Hướng dẫn lấy key</a>
+          </div>
+          <ul class="test-results" id="testResults"></ul>
+        </fieldset>
+
+        <fieldset>
+          <legend>Nhận dạng và dịch</legend>
+          <label>Model nhận dạng
+            <select id="model">
+              <option value="latest_long">latest_long (họp dài, mặc định)</option>
+              <option value="latest_short">latest_short (câu ngắn)</option>
+              <option value="default">default</option>
+            </select>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="interimTranslate" />
+            Dịch tạm khi người nói chưa hết câu
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Đơn giá (để ước tính chi phí)</legend>
+          <div class="row">
+            <label>Speech-to-Text ($/phút)
+              <input type="number" id="speechPrice" min="0" step="0.001" />
+            </label>
+            <label>Translation ($/1 triệu ký tự)
+              <input type="number" id="translatePrice" min="0" step="1" />
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="dialog-actions">
+          <button type="submit" class="btn primary" id="closeSettingsBtn">Xong</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

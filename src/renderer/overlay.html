@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'"
+    />
+    <title>Phụ đề nổi</title>
+    <link rel="stylesheet" href="overlay.css" />
+  </head>
+  <body>
+    <div class="box">
+      <div class="tools">
+        <button type="button" id="smaller" title="Chữ nhỏ hơn">A−</button>
+        <button type="button" id="bigger" title="Chữ to hơn">A+</button>
+        <button type="button" id="toggleSource" title="Ẩn/Hiện câu gốc">Ẩn câu gốc</button>
+        <button type="button" id="close" title="Đóng phụ đề nổi">Đóng</button>
+      </div>
+      <p class="source" id="source"></p>
+      <p class="caption" id="caption">Phụ đề sẽ hiện ở đây</p>
+    </div>
+    <script src="overlay.js"></script>
+  </body>
+</html>
