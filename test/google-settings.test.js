@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createTranslator, friendlyError, parseServiceAccount, toTranslateLang } = require('../src/main/google');
+const { createTranslator, friendlyError, toTranslateLang } = require('../src/main/google');
 const { SettingsStore } = require('../src/main/settings');
 
 test('dịch có cache và đếm ký tự', async () => {
@@ -41,13 +41,6 @@ test('lỗi Google được dịch sang tiếng Việt', () => {
   assert.match(friendlyError(new Error('something odd')), /Lỗi từ Google: something odd/);
 });
 
-test('kiểm tra file service account', () => {
-  assert.throws(() => parseServiceAccount('not json'), /JSON/);
-  assert.throws(() => parseServiceAccount('{"type":"authorized_user"}'), /service_account/);
-  const sa = parseServiceAccount(JSON.stringify({ type: 'service_account', client_email: 'a@b.iam', private_key: 'PK', project_id: 'p' }));
-  assert.deepEqual(sa, { client_email: 'a@b.iam', private_key: 'PK', project_id: 'p' });
-});
-
 test('settings mã hoá key, quyền 0600, tóm tắt không lộ key', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phudehop-'));
   const file = path.join(dir, 'settings.json');
@@ -66,9 +59,9 @@ test('settings mã hoá key, quyền 0600, tóm tắt không lộ key', () => {
   const reloaded = new SettingsStore(file, fakeSafe);
   assert.deepEqual(reloaded.getAuth(), { apiKey: 'AIzaSECRETx7Qk' });
 
-  reloaded.setPrefs({ model: 'latest_short', fontSize: 'x', bogus: 1 });
+  reloaded.setPrefs({ model: 'latest_short', textSize: 'x', bogus: 1 });
   assert.equal(reloaded.prefs.model, 'latest_short');
-  assert.equal(reloaded.prefs.fontSize, 32);
+  assert.equal(reloaded.prefs.textSize, 16);
   assert.equal('bogus' in reloaded.prefs, false);
 
   reloaded.clearAuth();

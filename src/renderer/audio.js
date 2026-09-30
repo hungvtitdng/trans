@@ -4,7 +4,7 @@ export class AudioError extends Error {}
 
 function systemAudioHint(platform) {
   if (platform === 'darwin') {
-    return 'Không lấy được âm thanh máy tính. Trên macOS 13 trở lên, hãy cấp quyền "Screen & System Audio Recording" (xem hướng dẫn bên dưới). Trên macOS cũ hơn, cài BlackHole, tạo "Multi-Output Device" rồi chọn nguồn "Micro / thiết bị thu" với thiết bị BlackHole.';
+    return 'Không lấy được âm thanh máy tính. Trên macOS 13 trở lên, hãy cấp quyền "Screen & System Audio Recording" (xem hướng dẫn bên dưới) rồi mở lại app. Nếu đang chạy bằng "npm start" từ Terminal, hãy dùng "npm run start:mac" (Terminal không xin được quyền thu âm thanh). Trên macOS cũ hơn, cài BlackHole, tạo "Multi-Output Device" rồi chọn nguồn "Micro / thiết bị thu" với thiết bị BlackHole.';
   }
   if (platform === 'win32') {
     return 'Không lấy được âm thanh máy tính. Hãy bật "Stereo Mix" trong Sound Settings hoặc cài VB-Cable, rồi chọn nguồn "Micro / thiết bị thu" với thiết bị đó.';
@@ -61,7 +61,9 @@ export class AudioCapture {
         }
         streams.push(display);
         display.getVideoTracks().forEach((t) => (t.enabled = false));
-        if (!display.getAudioTracks().length) throw new AudioError(systemAudioHint(platform));
+        // Thiếu quyền trên macOS 14.2+: track vẫn có nhưng đã 'ended' sẵn, không báo lỗi gì.
+        const tracks = display.getAudioTracks();
+        if (!tracks.length || tracks[0].readyState === 'ended') throw new AudioError(systemAudioHint(platform));
       }
       if (source === 'mic' || source === 'both') {
         try {

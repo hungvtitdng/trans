@@ -6,9 +6,8 @@ contextBridge.exposeInMainWorld('api', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setPrefs: (partial) => ipcRenderer.invoke('settings:setPrefs', partial),
   setApiKey: (key) => ipcRenderer.invoke('settings:setApiKey', key),
-  chooseServiceAccount: () => ipcRenderer.invoke('settings:chooseServiceAccount'),
+  chooseWhisperModel: () => ipcRenderer.invoke('settings:chooseWhisperModel'),
   clearKey: () => ipcRenderer.invoke('settings:clearKey'),
-  testKey: () => ipcRenderer.invoke('key:test'),
 
   startSession: (opts) => ipcRenderer.invoke('session:start', opts),
   stopSession: () => ipcRenderer.invoke('session:stop'),

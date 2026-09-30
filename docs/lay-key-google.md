@@ -2,11 +2,6 @@
 
 App không có server trung gian: mọi yêu cầu đi thẳng từ máy bạn tới Google bằng key của chính bạn, và Google tính phí vào project của bạn. Làm một lần, mất khoảng 10 phút.
 
-Bạn có thể dùng **một trong hai** cách xác thực:
-
-- **API key** — đơn giản nhất, hợp với dùng cá nhân.
-- **Service account (file JSON)** — hợp khi công ty quản lý quyền bằng IAM.
-
 ## 1. Tạo project
 
 1. Vào <https://console.cloud.google.com/> và đăng nhập.
@@ -27,7 +22,7 @@ Mở từng link, chọn đúng project, bấm **Enable**:
 - Cloud Speech-to-Text API: <https://console.cloud.google.com/apis/library/speech.googleapis.com>
 - Cloud Translation API: <https://console.cloud.google.com/apis/library/translate.googleapis.com>
 
-## 4a. Tạo API key (cách đơn giản)
+## 4. Tạo API key
 
 1. Mở <https://console.cloud.google.com/apis/credentials>.
 2. **Create credentials** → **API key**. Sao chép key vừa tạo.
@@ -36,23 +31,9 @@ Mở từng link, chọn đúng project, bấm **Enable**:
    - Cloud Translation API
 4. **Application restrictions** để **None** (app desktop không có website hay IP cố định; đặt giới hạn theo website/IP sẽ khiến key bị chặn).
 5. **Save**.
-6. Trong app: **Cài đặt** → dán key vào ô API key → nhấn Enter → **Kiểm tra key**.
+6. Trong app: **Cài đặt** → dán key vào ô **API key**. Key được lưu ngay; muốn xoá, rê chuột vào ô và bấm **×**.
 
 > Giới hạn key chỉ cho 2 API giúp giảm thiệt hại nếu key bị lộ: người khác không dùng được key đó cho các dịch vụ đắt tiền khác.
-
-## 4b. Tạo service account (cách thay thế)
-
-1. Mở <https://console.cloud.google.com/iam-admin/serviceaccounts> → **Create service account**.
-2. Đặt tên (ví dụ `phu-de-hop`) → **Create and continue**.
-3. Gán 2 role:
-   - **Cloud Speech Client**
-   - **Cloud Translation API User**
-4. **Done**. Bấm vào service account → tab **Keys** → **Add key** → **Create new key** → **JSON**. File JSON sẽ được tải về.
-5. Trong app: **Cài đặt** → **Chọn file JSON service account…** → chọn file vừa tải → **Kiểm tra key**.
-
-App đọc file, chỉ giữ `client_email`, `private_key`, `project_id` và mã hoá chúng. Sau khi nhập bạn có thể xoá file JSON khỏi thư mục Tải về.
-
-> Một số tổ chức chặn việc tạo key cho service account (chính sách `iam.disableServiceAccountKeyCreation`). Khi đó hãy dùng API key.
 
 ## 5. Đặt cảnh báo chi phí (Budget)
 
@@ -85,7 +66,7 @@ Giá có thể thay đổi, hãy xem bảng giá chính thức:
 - <https://cloud.google.com/speech-to-text/pricing>
 - <https://cloud.google.com/translate/pricing>
 
-## Gặp lỗi khi "Kiểm tra key"?
+## Gặp lỗi khi bấm "Bắt đầu"?
 
 | Thông báo | Cách xử lý |
 |---|---|
@@ -93,5 +74,4 @@ Giá có thể thay đổi, hãy xem bảng giá chính thức:
 | API chưa được bật | Làm lại bước 3, đúng project chứa key. |
 | Chưa gắn thanh toán | Làm lại bước 2. |
 | Key đang bị giới hạn | Trong API restrictions tích đủ 2 API; Application restrictions để None. |
-| Thiếu quyền | Service account cần đủ 2 role ở bước 4b. |
 | Không kết nối được tới Google | Kiểm tra mạng, VPN, proxy, tường lửa công ty. |

@@ -17,6 +17,8 @@ const {
   systemPreferences,
 } = require('electron');
 const { SttSession } = require('./stt');
+const whisper = require('./whisper');
+const { WhisperSession } = whisper;
 const google = require('./google');
 const { SettingsStore } = require('./settings');
 const transcript = require('./transcript');
@@ -39,6 +41,10 @@ let lastInterimTranslateAt = 0;
 let entries = [];
 let usedAudioMs = 0; // của các phiên đã kết thúc
 let usedChars = 0;
+
+// whisper-server do app tự chạy
+let whisperProc = null;
+let whisperError = '';
 
 function broadcast(msg) {
   for (const win of [mainWindow, overlayWindow]) {
@@ -126,6 +132,40 @@ function toggleOverlay() {
   return true;
 }
 
+// Chạy/dừng whisper-server cho khớp với Cài đặt.
+function syncWhisperServer() {
+  const p = settings.prefs;
+  const want = p.engine === 'whisper' && p.whisperModel;
+  if (whisperProc && (!want || whisperProc.model !== p.whisperModel || whisperProc.url !== p.whisperUrl)) {
+    whisperProc.kill();
+    whisperProc = null;
+  }
+  if (!want || whisperProc) return;
+  whisperError = '';
+  try {
+    const child = whisper.startServer({
+      model: p.whisperModel,
+      url: p.whisperUrl,
+      onExit: (msg) => {
+        whisperError = msg;
+        if (whisperProc === child) whisperProc = null;
+      },
+    });
+    if (child) whisperProc = Object.assign(child, { model: p.whisperModel, url: p.whisperUrl });
+  } catch (err) {
+    whisperError = err.message;
+  }
+}
+
+function whisperStatus() {
+  const p = settings.prefs;
+  if (p.engine !== 'whisper') return '';
+  if (whisperError) return whisperError;
+  if (whisperProc) return `whisper-server đang chạy với model ${path.basename(p.whisperModel)}.`;
+  if (!p.whisperModel) return 'Chưa chọn file model. Bấm "Chọn file model…".';
+  return `Dùng whisper-server có sẵn tại ${p.whisperUrl}.`;
+}
+
 function interimLongEnough(text) {
   // Tiếng Nhật/Trung không có dấu cách: tính theo số ký tự.
   return /\s/.test(text) ? text.split(/\s+/).length >= INTERIM_MIN_WORDS : text.length >= 8;
@@ -145,11 +185,14 @@ function startSession({ speakerLang, targetLang }) {
   langs = { from: google.toTranslateLang(speakerLang), to: targetLang };
   translator = google.createTranslator(auth);
   const tr = translator;
-  const s = new SttSession({
-    createClient: () => google.createSpeechClient(auth),
-    languageCode: speakerLang,
-    model: prefs.model,
-  });
+  const s =
+    prefs.engine === 'whisper'
+      ? new WhisperSession({ url: prefs.whisperUrl, language: langs.from.split('-')[0] })
+      : new SttSession({
+          createClient: () => google.createSpeechClient(auth),
+          languageCode: speakerLang,
+          model: prefs.model,
+        });
 
   s.on('interim', (text) => {
     broadcast({ type: 'interim', text });
@@ -179,11 +222,12 @@ function startSession({ speakerLang, targetLang }) {
   });
 
   s.on('error', (err) => {
-    broadcast({ type: 'error', message: google.friendlyError(err) });
+    const message = s instanceof WhisperSession ? [err.message, whisperError].filter(Boolean).join(' ') : google.friendlyError(err);
+    broadcast({ type: 'error', message });
   });
 
   s.on('stopped', () => {
-    usedAudioMs += s.audioMs;
+    if (s instanceof SttSession) usedAudioMs += s.audioMs; // Whisper chạy trên máy, không tính phí
     usedChars += tr.chars;
     if (stt === s) {
       stt = null;
@@ -208,7 +252,7 @@ function stopSession() {
 
 function usage() {
   const prefs = settings.prefs;
-  const minutes = (usedAudioMs + (stt ? stt.audioMs : 0)) / 60000;
+  const minutes = (usedAudioMs + (stt instanceof SttSession ? stt.audioMs : 0)) / 60000;
   const chars = usedChars + (translator ? translator.chars : 0);
   const cost = minutes * prefs.speechPricePerMin + (chars / 1e6) * prefs.translatePricePerMillion;
   return { minutes, chars, cost };
@@ -219,8 +263,25 @@ function registerIpc() {
     summary: settings.summary(),
     prefs: settings.prefs,
     platform: process.platform,
+    whisperStatus: whisperStatus(),
   }));
-  ipcMain.handle('settings:setPrefs', (_e, partial) => settings.setPrefs(partial));
+  ipcMain.handle('settings:setPrefs', (_e, partial) => {
+    const prefs = settings.setPrefs(partial);
+    syncWhisperServer();
+    return prefs;
+  });
+  ipcMain.handle('settings:chooseWhisperModel', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Chọn file model whisper (.bin)',
+      filters: [{ name: 'Model whisper.cpp', extensions: ['bin'] }],
+      properties: ['openFile'],
+    });
+    if (!res.canceled && res.filePaths.length) {
+      settings.setPrefs({ whisperModel: res.filePaths[0] });
+      syncWhisperServer();
+    }
+    return { prefs: settings.prefs, whisperStatus: whisperStatus() };
+  });
   ipcMain.handle('settings:setApiKey', (_e, key) => {
     try {
       settings.setApiKey(key);
@@ -229,34 +290,9 @@ function registerIpc() {
       return { error: err.message };
     }
   });
-  ipcMain.handle('settings:chooseServiceAccount', async () => {
-    const res = await dialog.showOpenDialog(mainWindow, {
-      title: 'Chọn file JSON của service account',
-      filters: [{ name: 'JSON', extensions: ['json'] }],
-      properties: ['openFile'],
-    });
-    if (res.canceled || !res.filePaths.length) return { canceled: true };
-    try {
-      const sa = google.parseServiceAccount(fs.readFileSync(res.filePaths[0], 'utf8'));
-      settings.setServiceAccount(sa);
-      return { summary: settings.summary() };
-    } catch (err) {
-      return { error: err.message };
-    }
-  });
   ipcMain.handle('settings:clearKey', () => {
     settings.clearAuth();
     return { summary: settings.summary() };
-  });
-  ipcMain.handle('key:test', async () => {
-    let auth;
-    try {
-      auth = settings.getAuth();
-    } catch {
-      return { error: 'Không giải mã được key đã lưu. Hãy nhập lại key.' };
-    }
-    if (!auth) return { error: 'Chưa có key để kiểm tra.' };
-    return google.testKey(auth);
   });
 
   ipcMain.handle('session:start', (_e, opts) => startSession(opts || {}));
@@ -320,10 +356,15 @@ app.whenReady().then(() => {
   settings = new SettingsStore(path.join(app.getPath('userData'), 'settings.json'), safeStorage);
   setupMedia();
   registerIpc();
+  syncWhisperServer();
   createMainWindow();
   app.on('activate', () => {
     if (!mainWindow) createMainWindow();
   });
+});
+
+app.on('will-quit', () => {
+  if (whisperProc) whisperProc.kill();
 });
 
 app.on('window-all-closed', () => {

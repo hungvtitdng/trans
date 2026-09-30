@@ -25,10 +25,12 @@
     </header>
 
     <main>
-      <section class="stage" aria-live="polite">
-        <p class="prev-line" id="prevLine"></p>
-        <p class="source-line" id="sourceLine">Bấm “Bắt đầu” để hiện phụ đề.</p>
-        <p class="current-line" id="currentLine"></p>
+      <section class="stage">
+        <div class="stage-now" aria-live="polite">
+          <p class="current-line" id="currentLine"></p>
+          <p class="source-line" id="sourceLine">Bấm “Bắt đầu” để hiện phụ đề.</p>
+        </div>
+        <ol class="history" id="history" aria-label="Các câu trước"></ol>
         <div class="stage-foot">
           <div class="meter" title="Mức âm lượng"><div class="meter-fill" id="meterFill"></div></div>
           <button type="button" id="overlayBtn" class="btn ghost">Phụ đề nổi</button>
@@ -71,7 +73,7 @@
           </select>
         </label>
         <label>Cỡ chữ
-          <input type="range" id="fontSize" min="18" max="64" step="2" />
+          <input type="range" id="fontSize" min="12" max="36" step="1" />
         </label>
       </section>
 
@@ -108,23 +110,38 @@
           <legend>Key Google Cloud</legend>
           <p class="key-summary" id="keySummary">Chưa có key.</p>
           <label>API key
-            <input type="password" id="apiKeyInput" autocomplete="off" spellcheck="false" placeholder="Dán API key rồi nhấn Enter" />
+            <span class="key-field">
+              <input type="password" id="apiKeyInput" autocomplete="off" spellcheck="false" placeholder="Dán API key vào đây" />
+              <button type="button" class="key-clear" id="clearKeyBtn" title="Xoá key" aria-label="Xoá key" hidden>×</button>
+              <button type="button" class="key-eye" id="toggleKeyBtn" title="Hiện key" aria-label="Hiện key" aria-pressed="false" hidden>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                  <circle cx="12" cy="12" r="3" />
+                  <line class="eye-slash" x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </button>
+            </span>
           </label>
-          <div class="row">
-            <button type="button" class="btn" id="saveKeyBtn">Lưu key</button>
-            <button type="button" class="btn" id="chooseJsonBtn">Chọn file JSON service account…</button>
-          </div>
-          <div class="row">
-            <button type="button" class="btn" id="testKeyBtn">Kiểm tra key</button>
-            <button type="button" class="btn danger" id="clearKeyBtn">Xoá key</button>
-            <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/lay-key-google.md" class="ext-link">Hướng dẫn lấy key</a>
-          </div>
-          <ul class="test-results" id="testResults"></ul>
+          <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/lay-key-google.md" class="ext-link">Hướng dẫn lấy key</a>
         </fieldset>
 
         <fieldset>
           <legend>Nhận dạng và dịch</legend>
-          <label>Model nhận dạng
+          <label>Nhận dạng giọng nói bằng
+            <select id="engine">
+              <option value="google">Google Speech-to-Text (tính phí)</option>
+              <option value="whisper">whisper.cpp trên máy (miễn phí)</option>
+            </select>
+          </label>
+          <label class="whisper-only">Địa chỉ whisper-server
+            <input type="url" id="whisperUrl" spellcheck="false" placeholder="http://127.0.0.1:8080" />
+          </label>
+          <div class="row whisper-only">
+            <button type="button" class="btn" id="chooseWhisperModelBtn">Chọn file model…</button>
+            <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/whisper.md" class="ext-link">Hướng dẫn whisper</a>
+          </div>
+          <p class="key-summary whisper-only" id="whisperStatus"></p>
+          <label class="google-only">Model nhận dạng
             <select id="model">
               <option value="latest_long">latest_long (họp dài, mặc định)</option>
               <option value="latest_short">latest_short (câu ngắn)</option>

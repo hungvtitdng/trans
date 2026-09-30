@@ -16,6 +16,7 @@
   },
   "scripts": {
     "start": "electron .",
+    "start:mac": "open -W -n node_modules/electron/dist/Electron.app --args \"$PWD\"",
     "test": "node --test test/*.test.js",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",

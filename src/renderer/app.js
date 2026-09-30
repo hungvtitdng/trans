@@ -9,7 +9,7 @@ const el = {
   status: $('status'),
   startBtn: $('startBtn'),
   settingsBtn: $('settingsBtn'),
-  prevLine: $('prevLine'),
+  history: $('history'),
   sourceLine: $('sourceLine'),
   currentLine: $('currentLine'),
   meterFill: $('meterFill'),
@@ -24,7 +24,11 @@ const el = {
   dialog: $('settingsDialog'),
   keySummary: $('keySummary'),
   apiKeyInput: $('apiKeyInput'),
-  testResults: $('testResults'),
+  clearKeyBtn: $('clearKeyBtn'),
+  toggleKeyBtn: $('toggleKeyBtn'),
+  engine: $('engine'),
+  whisperUrl: $('whisperUrl'),
+  whisperStatus: $('whisperStatus'),
   model: $('model'),
   interimTranslate: $('interimTranslate'),
   speechPrice: $('speechPrice'),
@@ -35,7 +39,8 @@ let platform = 'linux';
 let running = false;
 let busy = false;
 let lastShownId = 0;
-let lastTranslation = '';
+let shown = null; // câu dịch đang hiện ở trên cùng: { text, source }
+const HISTORY_LIMIT = 200; // biên bản giữ đủ; ở đây chỉ để đọc lại gần
 const rows = new Map();
 
 const capture = new AudioCapture({
@@ -187,12 +192,33 @@ function addRow(id, time, text) {
   if (nearBottom) el.list.scrollTop = el.list.scrollHeight;
 }
 
+// Câu mới nhất ở trên. Khi đang cuộn xuống đọc câu cũ, trình duyệt tự giữ chỗ đang đọc (scroll anchoring).
+function pushHistory({ text, source }) {
+  const li = document.createElement('li');
+  const tr = document.createElement('p');
+  tr.className = 'tr';
+  tr.textContent = text;
+  const src = document.createElement('p');
+  src.className = 'src';
+  src.textContent = source;
+  li.append(tr, src);
+  el.history.prepend(li);
+  while (el.history.children.length > HISTORY_LIMIT) el.history.lastElementChild.remove();
+}
+
+function commitShown() {
+  if (shown) pushHistory(shown);
+  shown = null;
+}
+
 api.onCaption((msg) => {
   switch (msg.type) {
     case 'interim':
       el.sourceLine.textContent = msg.text;
       break;
     case 'interimTranslation':
+      // Câu mới bắt đầu thế chỗ dòng vàng: đẩy câu vừa xong xuống lịch sử ngay, không để nó biến mất.
+      commitShown();
       el.currentLine.textContent = msg.text;
       el.currentLine.classList.add('interim');
       break;
@@ -208,10 +234,10 @@ api.onCaption((msg) => {
       }
       if (msg.id > lastShownId) {
         lastShownId = msg.id;
-        el.prevLine.textContent = lastTranslation;
+        commitShown();
+        shown = { text: msg.text, source: tr ? tr.previousElementSibling.textContent : '' };
         el.currentLine.textContent = msg.text;
         el.currentLine.classList.remove('interim');
-        lastTranslation = msg.text;
       }
       break;
     }
@@ -236,7 +262,7 @@ api.onCaption((msg) => {
 // ---------- Điều khiển ----------
 
 function applyFontSize(px) {
-  document.documentElement.style.setProperty('--caption-size', `${px}px`);
+  document.documentElement.style.setProperty('--text-size', `${px}px`);
 }
 
 el.source.addEventListener('change', () => {
@@ -253,7 +279,7 @@ el.targetLang.addEventListener('change', () => {
   api.setPrefs({ targetLang: el.targetLang.value });
 });
 el.fontSize.addEventListener('input', () => applyFontSize(el.fontSize.value));
-el.fontSize.addEventListener('change', () => api.setPrefs({ fontSize: Number(el.fontSize.value) }));
+el.fontSize.addEventListener('change', () => api.setPrefs({ textSize: Number(el.fontSize.value) }));
 navigator.mediaDevices.addEventListener('devicechange', () => refreshDevices());
 
 el.overlayBtn.addEventListener('click', async () => {
@@ -280,93 +306,90 @@ $('clearBtn').addEventListener('click', async () => {
   await api.clearTranscript();
   el.list.replaceChildren();
   rows.clear();
+  el.history.replaceChildren();
+  el.currentLine.textContent = '';
+  shown = null;
 });
 
 // ---------- Cài đặt ----------
 
-function renderSummary(summary) {
-  el.keySummary.classList.remove('warn');
-  if (!summary || !summary.configured) {
-    el.keySummary.textContent = 'Chưa có key. Dán API key hoặc chọn file JSON của service account.';
-    return;
-  }
-  const kind = summary.type === 'apiKey' ? summary.label : `Service account: ${summary.label}`;
-  if (summary.encrypted) {
-    el.keySummary.textContent = `Đang dùng ${kind} (đã mã hoá bằng kho khoá của hệ điều hành).`;
-  } else {
-    el.keySummary.textContent = `Đang dùng ${kind} — CHƯA mã hoá được vì hệ điều hành không có kho khoá (Linux: cài gnome-keyring hoặc kwallet).`;
-    el.keySummary.classList.add('warn');
-  }
-}
-
-function renderTestResults(items) {
-  el.testResults.replaceChildren(
-    ...items.map(([name, r]) => {
-      const li = document.createElement('li');
-      li.className = r.ok ? 'ok' : 'fail';
-      li.textContent = `${r.ok ? '✓' : '✗'} ${name}: ${r.message}`;
-      return li;
-    }),
-  );
+function renderSummary(summary, error) {
+  const configured = summary && summary.configured;
+  el.clearKeyBtn.hidden = !configured;
+  el.apiKeyInput.placeholder = configured ? `${summary.label} (đã lưu) — dán key khác để thay` : 'Dán API key vào đây';
+  el.keySummary.classList.toggle('warn', Boolean(error || (configured && !summary.encrypted)));
+  if (error) el.keySummary.textContent = error;
+  else if (!configured) el.keySummary.textContent = 'Chưa có key. Dán API key của Google Cloud vào ô dưới.';
+  else if (summary.encrypted) el.keySummary.textContent = 'Key đã lưu, mã hoá bằng kho khoá của hệ điều hành.';
+  else el.keySummary.textContent = 'Key đã lưu nhưng CHƯA mã hoá được vì hệ điều hành không có kho khoá (Linux: cài gnome-keyring hoặc kwallet).';
 }
 
 async function openSettings() {
   const s = await api.getSettings();
   renderSummary(s.summary);
-  el.testResults.replaceChildren();
-  el.apiKeyInput.value = '';
+  el.whisperStatus.textContent = s.whisperStatus;
   if (!el.dialog.open) el.dialog.showModal();
 }
 
+// Dán là lưu: chờ ngừng gõ một nhịp rồi lưu. Key vẫn nằm trong ô (ẩn) tới khi đóng app.
+let saveKeyTimer;
 async function saveApiKey() {
+  clearTimeout(saveKeyTimer);
   const key = el.apiKeyInput.value.trim();
-  if (!key) {
-    renderTestResults([['API key', { ok: false, message: 'Hãy dán API key vào ô trên.' }]]);
-    return;
-  }
+  if (!key) return;
   const res = await api.setApiKey(key);
-  el.apiKeyInput.value = '';
-  if (res.error) renderTestResults([['API key', { ok: false, message: res.error }]]);
-  else {
-    renderSummary(res.summary);
-    renderTestResults([['API key', { ok: true, message: 'Đã lưu. Bấm "Kiểm tra key" để thử.' }]]);
-  }
+  renderSummary(res.summary || (await api.getSettings()).summary, res.error);
 }
 
 el.settingsBtn.addEventListener('click', openSettings);
-$('saveKeyBtn').addEventListener('click', saveApiKey);
+function setKeyVisible(visible) {
+  el.apiKeyInput.type = visible ? 'text' : 'password';
+  el.toggleKeyBtn.setAttribute('aria-pressed', String(visible));
+  el.toggleKeyBtn.title = el.toggleKeyBtn.ariaLabel = visible ? 'Ẩn key' : 'Hiện key';
+}
+el.toggleKeyBtn.addEventListener('click', () => setKeyVisible(el.apiKeyInput.type === 'password'));
+el.apiKeyInput.addEventListener('input', () => {
+  el.toggleKeyBtn.hidden = !el.apiKeyInput.value;
+  clearTimeout(saveKeyTimer);
+  saveKeyTimer = setTimeout(saveApiKey, 400);
+});
 el.apiKeyInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
     saveApiKey();
   }
 });
-$('chooseJsonBtn').addEventListener('click', async () => {
-  const res = await api.chooseServiceAccount();
-  if (res.canceled) return;
-  if (res.error) renderTestResults([['Service account', { ok: false, message: res.error }]]);
-  else {
-    renderSummary(res.summary);
-    renderTestResults([['Service account', { ok: true, message: 'Đã lưu. Bấm "Kiểm tra key" để thử.' }]]);
-  }
+el.clearKeyBtn.addEventListener('click', async () => {
+  el.apiKeyInput.value = '';
+  el.toggleKeyBtn.hidden = true;
+  setKeyVisible(false);
+  renderSummary((await api.clearKey()).summary);
+  el.apiKeyInput.focus();
 });
-$('clearKeyBtn').addEventListener('click', async () => {
-  const res = await api.clearKey();
-  renderSummary(res.summary);
-  renderTestResults([]);
+
+function showEngineFields() {
+  const whisper = el.engine.value === 'whisper';
+  document.querySelectorAll('.whisper-only').forEach((n) => (n.hidden = !whisper));
+  document.querySelectorAll('.google-only').forEach((n) => (n.hidden = whisper));
+}
+
+// Server cần vài giây để nạp model, nên đọc lại trạng thái sau một nhịp.
+async function refreshWhisperStatus() {
+  el.whisperStatus.textContent = (await api.getSettings()).whisperStatus;
+  setTimeout(async () => (el.whisperStatus.textContent = (await api.getSettings()).whisperStatus), 1500);
+}
+el.engine.addEventListener('change', async () => {
+  showEngineFields();
+  await api.setPrefs({ engine: el.engine.value });
+  refreshWhisperStatus();
 });
-$('testKeyBtn').addEventListener('click', async (e) => {
-  const btn = e.currentTarget;
-  btn.disabled = true;
-  btn.textContent = 'Đang kiểm tra…';
-  try {
-    const res = await api.testKey();
-    if (res.error) renderTestResults([['Key', { ok: false, message: res.error }]]);
-    else renderTestResults([['Speech-to-Text', res.speech], ['Translation', res.translate]]);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Kiểm tra key';
-  }
+el.whisperUrl.addEventListener('change', async () => {
+  await api.setPrefs({ whisperUrl: el.whisperUrl.value.trim() || 'http://127.0.0.1:8080' });
+  refreshWhisperStatus();
+});
+$('chooseWhisperModelBtn').addEventListener('click', async () => {
+  await api.chooseWhisperModel();
+  refreshWhisperStatus();
 });
 el.model.addEventListener('change', () => api.setPrefs({ model: el.model.value }));
 el.interimTranslate.addEventListener('change', () => api.setPrefs({ interimTranslate: el.interimTranslate.checked }));
@@ -395,8 +418,11 @@ async function init() {
   el.source.value = p.source;
   el.speakerLang.value = p.speakerLang;
   el.targetLang.value = p.targetLang;
-  el.fontSize.value = p.fontSize;
-  applyFontSize(p.fontSize);
+  el.fontSize.value = p.textSize;
+  applyFontSize(p.textSize);
+  el.engine.value = p.engine;
+  showEngineFields();
+  el.whisperUrl.value = p.whisperUrl;
   el.model.value = p.model;
   el.interimTranslate.checked = p.interimTranslate;
   el.speechPrice.value = p.speechPricePerMin;

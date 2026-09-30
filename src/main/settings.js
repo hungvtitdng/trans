@@ -4,6 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const DEFAULT_PREFS = {
+  engine: 'google', // 'google' | 'whisper'
+  whisperUrl: 'http://127.0.0.1:8080',
+  whisperModel: '', // đường dẫn file ggml-*.bin; trống = người dùng tự chạy whisper-server
   model: 'latest_long',
   interimTranslate: true,
   speechPricePerMin: 0.016,
@@ -12,7 +15,7 @@ const DEFAULT_PREFS = {
   deviceId: '',
   speakerLang: 'en-US',
   targetLang: 'vi',
-  fontSize: 32,
+  textSize: 16, // cỡ chữ tiếng Anh (px); bản dịch to hơn 2px
 };
 
 // Lưu cài đặt vào settings.json (quyền 0600). Key được mã hoá bằng safeStorage;
@@ -47,10 +50,6 @@ class SettingsStore {
     apiKey = String(apiKey || '').trim();
     if (!apiKey) throw new Error('API key đang trống.');
     this._setAuth('apiKey', `API key …${apiKey.slice(-4)}`, { apiKey });
-  }
-
-  setServiceAccount(sa) {
-    this._setAuth('serviceAccount', sa.client_email, sa);
   }
 
   clearAuth() {

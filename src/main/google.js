@@ -47,22 +47,6 @@ function createTranslator(auth, client) {
   return translator;
 }
 
-function parseServiceAccount(text) {
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    throw new Error('File không phải JSON hợp lệ.');
-  }
-  if (!json || json.type !== 'service_account') {
-    throw new Error('File JSON không phải khoá service account (thiếu "type": "service_account").');
-  }
-  if (!json.client_email || !json.private_key) {
-    throw new Error('File service account thiếu client_email hoặc private_key.');
-  }
-  return { client_email: json.client_email, private_key: json.private_key, project_id: json.project_id || '' };
-}
-
 function errorText(err) {
   if (!err) return '';
   const parts = [err.message, err.details, err.reason, err.status, err.code];
@@ -104,35 +88,9 @@ function friendlyError(err) {
   return `Lỗi từ Google: ${msg}`;
 }
 
-// Gửi 0,3 giây im lặng qua recognize và dịch thử "Hello". Mỗi API có kết quả riêng.
-async function testKey(auth) {
-  const result = {};
-  const speech = createSpeechClient(auth);
-  try {
-    await speech.recognize({
-      config: { encoding: 'LINEAR16', sampleRateHertz: 16000, languageCode: 'en-US' },
-      audio: { content: Buffer.alloc(9600).toString('base64') },
-    });
-    result.speech = { ok: true, message: 'Speech-to-Text hoạt động.' };
-  } catch (err) {
-    result.speech = { ok: false, message: friendlyError(err) };
-  } finally {
-    speech.close().catch(() => {});
-  }
-  try {
-    const tr = await createTranslator(auth).translate('Hello', 'en', 'vi');
-    result.translate = { ok: true, message: `Translation hoạt động ("Hello" → "${tr}").` };
-  } catch (err) {
-    result.translate = { ok: false, message: friendlyError(err) };
-  }
-  return result;
-}
-
 module.exports = {
   createSpeechClient,
   createTranslator,
   toTranslateLang,
-  parseServiceAccount,
   friendlyError,
-  testKey,
 };

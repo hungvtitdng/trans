@@ -9,7 +9,7 @@ Không có server trung gian: bạn dùng key Google Cloud của chính mình, a
 ## Tính năng
 
 - Nghe **âm thanh máy tính** (Zoom, Meet, Teams, YouTube…), **micro**, hoặc **cả hai** cùng lúc.
-- Nhận dạng giọng nói bằng Google Cloud Speech-to-Text (streaming), dịch bằng Google Cloud Translation.
+- Nhận dạng giọng nói bằng Google Cloud Speech-to-Text (streaming) hoặc [whisper.cpp chạy trên máy](docs/whisper.md) (miễn phí), dịch bằng Google Cloud Translation.
 - Hiện chữ gốc ngay khi người nói đang nói; tuỳ chọn **dịch tạm** trước khi hết câu.
 - **Phụ đề nổi**: cửa sổ trong suốt luôn nằm trên cùng, kể cả khi app họp đang toàn màn hình; kéo thả, đổi cỡ chữ, ẩn/hiện câu gốc.
 - **Biên bản song ngữ** có giờ: sao chép, lưu `.txt` hoặc `.srt`.
@@ -47,7 +47,7 @@ Bản phát hành mặc định **chưa ký số**, nên hệ điều hành sẽ
 ## Bắt đầu nhanh
 
 1. Lấy key Google Cloud theo hướng dẫn: [docs/lay-key-google.md](docs/lay-key-google.md).
-2. Mở app → hộp **Cài đặt** tự hiện → dán API key, nhấn Enter (hoặc chọn file JSON service account) → **Kiểm tra key**.
+2. Mở app → hộp **Cài đặt** tự hiện → dán API key vào ô **API key** (lưu ngay, không cần bấm nút).
 3. Chọn **Nguồn âm thanh**, **Người nói** (ví dụ Tiếng Anh (Mỹ)) và **Dịch sang** (Tiếng Việt).
 4. Bấm **Bắt đầu**. Muốn phụ đề nổi trên app họp, bấm **Phụ đề nổi**.
 5. Họp xong: **Dừng**, rồi **Lưu .txt** / **Lưu .srt** nếu cần.
@@ -57,7 +57,7 @@ Bản phát hành mặc định **chưa ký số**, nên hệ điều hành sẽ
 | Hệ điều hành | Cách làm |
 |---|---|
 | **Windows 10/11** | Chạy ngay, chọn nguồn "Âm thanh máy tính". |
-| **macOS 13 trở lên** | Chọn "Âm thanh máy tính". Lần đầu, cấp quyền tại System Settings → Privacy & Security → **Screen & System Audio Recording** → bật "Phu de hop", rồi thoát và mở lại app. App không lưu hình ảnh màn hình. |
+| **macOS 13 trở lên** | Chọn "Âm thanh máy tính". Khi phát triển, chạy bằng `npm run start:mac` thay vì `npm start` (quyền sẽ mang tên "Electron"). Lần đầu, cấp quyền tại System Settings → Privacy & Security → **Screen & System Audio Recording** → bật "Phu de hop", rồi thoát và mở lại app. App không lưu hình ảnh màn hình. |
 | **macOS 12 trở xuống** | Cài [BlackHole](https://github.com/ExistentialAudio/BlackHole). Trong **Audio MIDI Setup** tạo **Multi-Output Device** gồm loa của bạn + BlackHole, đặt nó làm đầu ra. Trong app chọn nguồn "Micro / thiết bị thu" và thiết bị "BlackHole". |
 | **Linux (PulseAudio/PipeWire)** | Chọn nguồn "Micro / thiết bị thu", thiết bị **"Monitor of …"** của loa đang dùng. |
 
@@ -89,6 +89,7 @@ git clone https://github.com/your-org/phu-de-hop.git
 cd phu-de-hop
 npm install
 npm start          # chạy app
+npm run start:mac  # macOS: chạy app như app riêng để xin được quyền thu âm thanh máy tính
 npm test           # chạy test (node:test)
 npm run dist       # đóng gói cho hệ điều hành hiện tại
 npm run dist:win   # hoặc dist:mac, dist:linux
@@ -102,7 +103,7 @@ src/main/       main process: main.js (cửa sổ, IPC), stt.js (phiên streamin
                 transcript.js (xuất TXT/SRT)
 src/preload/    preload.js — cầu nối contextBridge duy nhất
 src/renderer/   giao diện HTML/CSS/JS thuần, audio.js + pcm-worklet.js lấy âm thanh
-test/           test cho stt, transcript, google, settings
+test/           test cho stt, whisper, transcript, google, settings
 ```
 
 Phát hành: đẩy tag `v*` (ví dụ `git tag v0.1.0 && git push --tags`), GitHub Actions sẽ chạy test rồi build cho cả 3 hệ điều hành và đưa lên Releases. Cách thêm chứng chỉ ký số: xem chú thích trong `.github/workflows/release.yml`.

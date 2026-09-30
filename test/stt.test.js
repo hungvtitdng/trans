@@ -132,3 +132,29 @@ test('lỗi khác thì phát error và dừng', () => {
   session.write(Buffer.alloc(3200));
   assert.equal(session.audioMs, 0);
 });
+
+test('tách câu: câu xong trong kết quả tạm được chốt sớm, câu cuối chốt khi Google trả kết quả cuối', () => {
+  const { client, session, events } = setup();
+  const s = client.streams[0];
+  s.emit('data', interim('To select this strategy'));
+  s.emit('data', interim('To select this strategy. You know it is easier'));
+  s.emit('data', interim('To select this strategy. You know it is easier. Yeah thank'));
+  s.emit('data', final('To select this strategy. You know it is easier. Yeah, thank you.'));
+  assert.deepEqual(events, [
+    ['interim', 'To select this strategy'],
+    ['final', 'To select this strategy.'],
+    ['interim', 'You know it is easier'],
+    ['final', 'You know it is easier.'],
+    ['interim', 'Yeah thank'],
+    ['final', 'Yeah, thank you.'],
+  ]);
+
+  // Lượt nói sau bắt đầu đếm lại từ đầu.
+  events.length = 0;
+  s.emit('data', final('So give me after this fall. I am going to finish the dashboard.'));
+  assert.deepEqual(events, [
+    ['final', 'So give me after this fall.'],
+    ['final', 'I am going to finish the dashboard.'],
+  ]);
+  session.stop();
+});

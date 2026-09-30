@@ -9,6 +9,12 @@ const RECONNECT_CODES = new Set([4, 11, 14]);
 const MAX_RECONNECTS_WITHOUT_DATA = 5;
 const BYTES_PER_MS = 32; // 16000 mẫu/giây * 2 byte / 1000
 
+// ponytail: tách câu theo quy tắc Unicode, "Mr." cũng bị tính là hết câu; đủ dùng cho phụ đề.
+const segmenter = new Intl.Segmenter(undefined, { granularity: 'sentence' });
+function splitSentences(text) {
+  return [...segmenter.segment(text)].map((s) => s.segment.trim()).filter(Boolean);
+}
+
 class SttSession extends EventEmitter {
   constructor({ createClient, languageCode = 'en-US', model = 'latest_long', streamLimitMs = DEFAULT_STREAM_LIMIT_MS }) {
     super();
@@ -21,6 +27,7 @@ class SttSession extends EventEmitter {
     this.stream = null;
     this.timer = null;
     this.interim = '';
+    this.committed = 0; // số câu của lượt nói hiện tại đã phát 'final' sớm
     this.bytesSent = 0;
     this.reconnects = 0;
   }
@@ -105,9 +112,17 @@ class SttSession extends EventEmitter {
   }
 
   _flushInterim() {
-    const text = this.interim.trim();
+    this._emitFinal(this.interim);
     this.interim = '';
-    if (text) this.emit('final', text);
+  }
+
+  // Google hay gộp cả tràng nói thành một kết quả: phát từng câu, bỏ các câu đã phát sớm.
+  // Nếu Google sửa lại làm số câu ít đi thì phát lại câu cuối, thà lặp còn hơn mất chữ.
+  _emitFinal(text) {
+    const sentences = splitSentences(text);
+    const from = Math.min(this.committed, Math.max(sentences.length - 1, 0));
+    this.committed = 0;
+    for (const s of sentences.slice(from)) this.emit('final', s);
   }
 
   _onData(data) {
@@ -116,13 +131,15 @@ class SttSession extends EventEmitter {
     if (!results.length) return;
     if (results[0].isFinal) {
       this.interim = '';
-      const text = ((results[0].alternatives || [])[0] || {}).transcript || '';
-      if (text.trim()) this.emit('final', text.trim());
+      this._emitFinal(((results[0].alternatives || [])[0] || {}).transcript || '');
       return;
     }
     const text = results.map((r) => ((r.alternatives || [])[0] || {}).transcript || '').join('');
     this.interim = text;
-    if (text.trim()) this.emit('interim', text.trim());
+    // Câu nào đã xong (không phải câu cuối) thì chốt luôn; chỉ câu đang nói là 'interim'.
+    const sentences = splitSentences(text);
+    while (this.committed < sentences.length - 1) this.emit('final', sentences[this.committed++]);
+    if (sentences.length) this.emit('interim', sentences[sentences.length - 1]);
   }
 
   _onError(err) {
@@ -137,4 +154,4 @@ class SttSession extends EventEmitter {
   }
 }
 
-module.exports = { SttSession, DEFAULT_STREAM_LIMIT_MS };
+module.exports = { SttSession, DEFAULT_STREAM_LIMIT_MS, splitSentences };
