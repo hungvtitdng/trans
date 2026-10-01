@@ -3,6 +3,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+  platform: process.platform,
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setPrefs: (partial) => ipcRenderer.invoke('settings:setPrefs', partial),
   setApiKey: (key) => ipcRenderer.invoke('settings:setApiKey', key),

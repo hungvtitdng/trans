@@ -13,14 +13,18 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <span class="app-name">Phụ đề họp</span>
-        <span class="pair" id="pair">EN → VI</span>
+        <span class="app-name" id="pair">Translate EN-VI</span>
       </div>
       <div class="usage" id="usage" title="Số phút âm thanh đã gửi và chi phí ước tính">0,0 phút · ≈ $0.00</div>
       <span class="status" id="status" data-state="idle">Sẵn sàng</span>
       <div class="top-actions">
-        <button type="button" id="settingsBtn" class="btn">Cài đặt</button>
         <button type="button" id="startBtn" class="btn primary">Bắt đầu</button>
+        <button type="button" id="settingsBtn" class="btn icon" title="Cài đặt" aria-label="Cài đặt">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -38,44 +42,6 @@
       </section>
 
       <p class="error-banner" id="errorBanner" hidden></p>
-
-      <section class="controls">
-        <label>Nguồn âm thanh
-          <select id="source">
-            <option value="system">Âm thanh máy tính</option>
-            <option value="mic">Micro / thiết bị thu</option>
-            <option value="both">Cả hai</option>
-          </select>
-        </label>
-        <label>Thiết bị thu
-          <select id="device"><option value="">Mặc định</option></select>
-        </label>
-        <label>Người nói
-          <select id="speakerLang">
-            <option value="en-US">Tiếng Anh (Mỹ)</option>
-            <option value="en-GB">Tiếng Anh (Anh)</option>
-            <option value="en-AU">Tiếng Anh (Úc)</option>
-            <option value="en-IN">Tiếng Anh (Ấn Độ)</option>
-            <option value="en-SG">Tiếng Anh (Singapore)</option>
-            <option value="ja-JP">Tiếng Nhật</option>
-            <option value="ko-KR">Tiếng Hàn</option>
-            <option value="cmn-Hans-CN">Tiếng Trung (giản thể)</option>
-            <option value="vi-VN">Tiếng Việt</option>
-          </select>
-        </label>
-        <label>Dịch sang
-          <select id="targetLang">
-            <option value="vi">Tiếng Việt</option>
-            <option value="en">Tiếng Anh</option>
-            <option value="ja">Tiếng Nhật</option>
-            <option value="ko">Tiếng Hàn</option>
-            <option value="zh-CN">Tiếng Trung (giản thể)</option>
-          </select>
-        </label>
-        <label>Cỡ chữ
-          <input type="range" id="fontSize" min="12" max="36" step="1" />
-        </label>
-      </section>
 
       <section class="transcript">
         <div class="transcript-head">
@@ -105,6 +71,48 @@
     <dialog id="settingsDialog">
       <form method="dialog" class="settings" id="settingsForm">
         <h2>Cài đặt</h2>
+
+        <fieldset>
+          <legend>Âm thanh và ngôn ngữ</legend>
+          <p class="key-summary" id="runningNote" hidden>Đang chạy: bấm Dừng để đổi nguồn âm thanh và ngôn ngữ.</p>
+          <div class="controls">
+            <label>Nguồn âm thanh
+              <select id="source">
+                <option value="system">Âm thanh máy tính</option>
+                <option value="mic">Micro / thiết bị thu</option>
+                <option value="both">Cả hai</option>
+              </select>
+            </label>
+            <label>Thiết bị thu
+              <select id="device"><option value="">Mặc định</option></select>
+            </label>
+            <label>Người nói
+              <select id="speakerLang">
+                <option value="en-US">Tiếng Anh (Mỹ)</option>
+                <option value="en-GB">Tiếng Anh (Anh)</option>
+                <option value="en-AU">Tiếng Anh (Úc)</option>
+                <option value="en-IN">Tiếng Anh (Ấn Độ)</option>
+                <option value="en-SG">Tiếng Anh (Singapore)</option>
+                <option value="ja-JP">Tiếng Nhật</option>
+                <option value="ko-KR">Tiếng Hàn</option>
+                <option value="cmn-Hans-CN">Tiếng Trung (giản thể)</option>
+                <option value="vi-VN">Tiếng Việt</option>
+              </select>
+            </label>
+            <label>Dịch sang
+              <select id="targetLang">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">Tiếng Anh</option>
+                <option value="ja">Tiếng Nhật</option>
+                <option value="ko">Tiếng Hàn</option>
+                <option value="zh-CN">Tiếng Trung (giản thể)</option>
+              </select>
+            </label>
+            <label>Cỡ chữ
+              <input type="range" id="fontSize" min="12" max="36" step="1" />
+            </label>
+          </div>
+        </fieldset>
 
         <fieldset>
           <legend>Key Google Cloud</legend>

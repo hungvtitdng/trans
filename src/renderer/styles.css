@@ -95,20 +95,49 @@ a:focus-visible {
   border-color: var(--caption);
   color: var(--caption);
 }
+.btn.icon {
+  padding: 7px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.btn.icon:hover {
+  color: var(--text);
+}
+.btn.icon svg {
+  display: block;
+}
 .btn:disabled {
   opacity: 0.5;
   cursor: default;
 }
 
-/* Thanh trên */
+/* Thanh trên, cũng là thanh tiêu đề cửa sổ (main.js: titleBarOptions): nắm vào đây để kéo cửa sổ.
+   Cao 54px + viền, khớp TOPBAR_HEIGHT bên main.js. */
 .topbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 14px;
+  min-height: 55px;
   padding: 10px 16px;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.topbar button,
+.usage,
+dialog {
+  -webkit-app-region: no-drag;
+}
+/* macOS: chừa chỗ cho 3 nút đèn bên trái. */
+[data-platform='darwin'] .topbar {
+  padding-left: 88px;
+}
+/* Windows: chừa chỗ cho nút thu nhỏ/phóng to/đóng mà hệ điều hành vẽ đè ở góc phải. */
+[data-platform='win32'] .topbar {
+  padding-right: calc(16px + 100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
 }
 .brand {
   display: flex;
@@ -119,14 +148,6 @@ a:focus-visible {
 .app-name {
   font-weight: 700;
   font-size: 16px;
-}
-.pair {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 1px 8px;
 }
 .usage {
   color: var(--muted);
@@ -275,7 +296,7 @@ main > * {
   white-space: pre-line;
 }
 
-/* Hàng điều khiển */
+/* Âm thanh và ngôn ngữ (trong Cài đặt) */
 .controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

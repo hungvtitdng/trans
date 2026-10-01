@@ -20,6 +20,7 @@ const el = {
   speakerLang: $('speakerLang'),
   targetLang: $('targetLang'),
   fontSize: $('fontSize'),
+  runningNote: $('runningNote'),
   list: $('transcriptList'),
   dialog: $('settingsDialog'),
   keySummary: $('keySummary'),
@@ -35,7 +36,8 @@ const el = {
   translatePrice: $('translatePrice'),
 };
 
-let platform = 'linux';
+const platform = api.platform;
+document.documentElement.dataset.platform = platform; // styles.css chừa chỗ cho nút cửa sổ theo hệ điều hành
 let running = false;
 let busy = false;
 let lastShownId = 0;
@@ -69,7 +71,7 @@ function hideError() {
 function updatePair() {
   const from = el.speakerLang.value.startsWith('cmn') ? 'ZH' : el.speakerLang.value.split('-')[0].toUpperCase();
   const to = el.targetLang.value.split('-')[0].toUpperCase();
-  el.pair.textContent = `${from} → ${to}`;
+  el.pair.textContent = `Translate ${from}-${to}`;
 }
 
 function setRunningUi(on) {
@@ -77,6 +79,7 @@ function setRunningUi(on) {
   el.startBtn.textContent = on ? 'Dừng' : 'Bắt đầu';
   el.startBtn.classList.toggle('running', on);
   for (const s of [el.source, el.device, el.speakerLang, el.targetLang]) s.disabled = on;
+  el.runningNote.hidden = !on;
   if (!on) el.meterFill.style.width = '0';
 }
 
@@ -329,6 +332,8 @@ async function openSettings() {
   renderSummary(s.summary);
   el.whisperStatus.textContent = s.whisperStatus;
   if (!el.dialog.open) el.dialog.showModal();
+  // Nhóm "Âm thanh và ngôn ngữ" đứng đầu nên tự nhận focus; chưa có key thì đưa con trỏ vào ô key.
+  if (!s.summary.configured) el.apiKeyInput.focus();
 }
 
 // Dán là lưu: chờ ngừng gõ một nhịp rồi lưu. Key vẫn nằm trong ô (ẩn) tới khi đóng app.
@@ -413,7 +418,6 @@ document.querySelectorAll('a.ext-link').forEach((a) =>
 
 async function init() {
   const s = await api.getSettings();
-  platform = s.platform;
   const p = s.prefs;
   el.source.value = p.source;
   el.speakerLang.value = p.speakerLang;

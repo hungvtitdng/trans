@@ -10,6 +10,7 @@ const {
   desktopCapturer,
   dialog,
   ipcMain,
+  nativeTheme,
   safeStorage,
   screen,
   session,
@@ -78,6 +79,22 @@ const webPreferences = {
   nodeIntegration: false,
 };
 
+// Thanh trên của giao diện nằm chung dòng với thanh tiêu đề: macOS giữ 3 nút đèn ở bên trái,
+// Windows vẽ nút hệ thống đè lên góc phải (màu theo --panel/--text trong styles.css). Linux giữ khung mặc định.
+const TOPBAR_HEIGHT = 54;
+
+function titleBarOverlay() {
+  return nativeTheme.shouldUseDarkColors
+    ? { color: '#1e2128', symbolColor: '#e6e8ec', height: TOPBAR_HEIGHT }
+    : { color: '#ffffff', symbolColor: '#1b1d22', height: TOPBAR_HEIGHT };
+}
+
+function titleBarOptions() {
+  if (process.platform === 'darwin') return { titleBarStyle: 'hidden', trafficLightPosition: { x: 18, y: 20 } };
+  if (process.platform === 'win32') return { titleBarStyle: 'hidden', titleBarOverlay: titleBarOverlay() };
+  return {};
+}
+
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1040,
@@ -86,6 +103,7 @@ function createMainWindow() {
     minHeight: 480,
     title: 'Phụ đề họp',
     backgroundColor: '#111317',
+    ...titleBarOptions(),
     webPreferences,
   });
   hardenWindow(mainWindow);
@@ -360,6 +378,9 @@ app.whenReady().then(() => {
   createMainWindow();
   app.on('activate', () => {
     if (!mainWindow) createMainWindow();
+  });
+  nativeTheme.on('updated', () => {
+    if (process.platform === 'win32' && mainWindow) mainWindow.setTitleBarOverlay(titleBarOverlay());
   });
 });
 

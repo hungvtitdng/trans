@@ -48,7 +48,7 @@ Bản phát hành mặc định **chưa ký số**, nên hệ điều hành sẽ
 
 1. Lấy key Google Cloud theo hướng dẫn: [docs/lay-key-google.md](docs/lay-key-google.md).
 2. Mở app → hộp **Cài đặt** tự hiện → dán API key vào ô **API key** (lưu ngay, không cần bấm nút).
-3. Chọn **Nguồn âm thanh**, **Người nói** (ví dụ Tiếng Anh (Mỹ)) và **Dịch sang** (Tiếng Việt).
+3. Cũng trong **Cài đặt**, mục **Âm thanh và ngôn ngữ**: chọn **Nguồn âm thanh**, **Người nói** (ví dụ Tiếng Anh (Mỹ)) và **Dịch sang** (Tiếng Việt), rồi bấm **Xong**.
 4. Bấm **Bắt đầu**. Muốn phụ đề nổi trên app họp, bấm **Phụ đề nổi**.
 5. Họp xong: **Dừng**, rồi **Lưu .txt** / **Lưu .srt** nếu cần.
 
