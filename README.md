@@ -1,10 +1,8 @@
-# Phụ đề họp
+# Translator
 
 App desktop mã nguồn mở hiện **phụ đề dịch realtime** cho cuộc họp: nghe tiếng Anh (hoặc Nhật, Hàn, Trung…), hiện tiếng Việt ngay trên màn hình. Chạy trên Windows, macOS và Linux.
 
 Không có server trung gian: bạn dùng key Google Cloud của chính mình, app gọi thẳng Google, và bạn chỉ trả đúng phần mình dùng.
-
-> **Lưu ý cho người fork/phát hành:** thay `your-org` trong `package.json`, `README.md`, `docs/` và `src/renderer/index.html` bằng tài khoản/tổ chức GitHub của bạn.
 
 ## Tính năng
 
@@ -12,35 +10,35 @@ Không có server trung gian: bạn dùng key Google Cloud của chính mình, a
 - Nhận dạng giọng nói bằng Google Cloud Speech-to-Text (streaming) hoặc [whisper.cpp chạy trên máy](docs/whisper.md) (miễn phí), dịch bằng Google Cloud Translation.
 - Hiện chữ gốc ngay khi người nói đang nói; tuỳ chọn **dịch tạm** trước khi hết câu.
 - **Phụ đề nổi**: cửa sổ trong suốt luôn nằm trên cùng, kể cả khi app họp đang toàn màn hình; kéo thả, đổi cỡ chữ, ẩn/hiện câu gốc.
-- **Biên bản song ngữ** có giờ: sao chép, lưu `.txt` hoặc `.srt`.
+- Mục **Song ngữ**: biên bản có giờ, câu mới nhất ở trên; sao chép, lưu `.txt` hoặc `.srt`.
 - Hiện số phút đã dùng và **chi phí ước tính**.
 - Key được **mã hoá** bằng kho khoá của hệ điều hành (Keychain / DPAPI / libsecret); giao diện không bao giờ đọc được key thật.
 - Giao diện sáng/tối theo hệ thống, co giãn tới bề rộng 420 px.
 
 ## Cài đặt
 
-Tải bản mới nhất ở trang [Releases](https://github.com/your-org/phu-de-hop/releases).
+Tải bản mới nhất ở trang [Releases](https://github.com/hungvtitdng/trans/releases).
 
 Bản phát hành mặc định **chưa ký số**, nên hệ điều hành sẽ cảnh báo lần đầu mở.
 
 ### Windows
 
-1. Tải `phu-de-hop-<phiên bản>-win-x64.exe` (hoặc `arm64` cho máy ARM).
+1. Tải `translator-<phiên bản>-win-x64.exe` (hoặc `arm64` cho máy ARM).
 2. Chạy file. Nếu hiện **"Windows protected your PC"** (SmartScreen): bấm **More info** → **Run anyway**.
 
 ### macOS
 
 1. Tải file `.dmg`: `arm64` cho chip Apple (M1 trở lên), `x64` cho máy Intel.
-2. Mở dmg, kéo **Phu de hop** vào **Applications**.
+2. Mở dmg, kéo **Translator** vào **Applications**.
 3. Lần đầu mở, Gatekeeper sẽ chặn. Cách vượt:
    - Chuột phải vào app → **Open** → **Open**; hoặc
    - System Settings → **Privacy & Security** → kéo xuống, bấm **Open Anyway**.
-   - Nếu báo "app is damaged", chạy trong Terminal: `xattr -cr "/Applications/Phu de hop.app"`
+   - Nếu báo "app is damaged", chạy trong Terminal: `xattr -cr "/Applications/Translator.app"`
 
 ### Linux
 
-- **AppImage**: `chmod +x phu-de-hop-*.AppImage && ./phu-de-hop-*.AppImage`
-- **Debian/Ubuntu**: `sudo apt install ./phu-de-hop-*.deb`
+- **AppImage**: `chmod +x translator-*.AppImage && ./translator-*.AppImage`
+- **Debian/Ubuntu**: `sudo apt install ./translator-*.deb`
 
 Để key được mã hoá trên Linux, cần có `gnome-keyring` hoặc `kwallet` (đa số môi trường desktop đã có sẵn). Nếu không, app vẫn chạy nhưng sẽ cảnh báo key chưa được mã hoá.
 
@@ -57,7 +55,7 @@ Bản phát hành mặc định **chưa ký số**, nên hệ điều hành sẽ
 | Hệ điều hành | Cách làm |
 |---|---|
 | **Windows 10/11** | Chạy ngay, chọn nguồn "Âm thanh máy tính". |
-| **macOS 13 trở lên** | Chọn "Âm thanh máy tính". Khi phát triển, chạy bằng `npm run start:mac` thay vì `npm start` (quyền sẽ mang tên "Electron"). Lần đầu, cấp quyền tại System Settings → Privacy & Security → **Screen & System Audio Recording** → bật "Phu de hop", rồi thoát và mở lại app. App không lưu hình ảnh màn hình. |
+| **macOS 13 trở lên** | Chọn "Âm thanh máy tính". Khi phát triển, chạy bằng `npm run start:mac` thay vì `npm start` (quyền sẽ mang tên "Electron"). Lần đầu, cấp quyền tại System Settings → Privacy & Security → **Screen & System Audio Recording** → bật "Translator", rồi thoát và mở lại app. App không lưu hình ảnh màn hình. |
 | **macOS 12 trở xuống** | Cài [BlackHole](https://github.com/ExistentialAudio/BlackHole). Trong **Audio MIDI Setup** tạo **Multi-Output Device** gồm loa của bạn + BlackHole, đặt nó làm đầu ra. Trong app chọn nguồn "Micro / thiết bị thu" và thiết bị "BlackHole". |
 | **Linux (PulseAudio/PipeWire)** | Chọn nguồn "Micro / thiết bị thu", thiết bị **"Monitor of …"** của loa đang dùng. |
 
@@ -85,8 +83,8 @@ Một cuộc họp 1 giờ thường tốn khoảng $1–2. Chi phí ước tín
 Yêu cầu Node.js 20 trở lên.
 
 ```bash
-git clone https://github.com/your-org/phu-de-hop.git
-cd phu-de-hop
+git clone https://github.com/hungvtitdng/trans.git
+cd trans
 npm install
 npm start          # chạy app
 npm run start:mac  # macOS: chạy app như app riêng để xin được quyền thu âm thanh máy tính
@@ -135,7 +133,7 @@ Mọi đóng góp đều hoan nghênh:
 3. Chạy `npm test` trước khi mở Pull Request; thêm test nếu sửa logic trong `src/main`.
 4. **Không bao giờ commit key hay file JSON service account.**
 
-Báo lỗi hoặc đề xuất tính năng ở mục [Issues](https://github.com/your-org/phu-de-hop/issues).
+Báo lỗi hoặc đề xuất tính năng ở mục [Issues](https://github.com/hungvtitdng/trans/issues).
 
 ## Giấy phép
 

@@ -101,7 +101,7 @@ function createMainWindow() {
     height: 760,
     minWidth: 420,
     minHeight: 480,
-    title: 'Phụ đề họp',
+    title: 'Translator',
     backgroundColor: '#111317',
     ...titleBarOptions(),
     webPreferences,

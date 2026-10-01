@@ -13,9 +13,9 @@ function systemAudioHint(platform) {
 }
 
 const MAC_SCREEN_PERMISSION =
-  'macOS chưa cho phép thu âm thanh hệ thống. Vào System Settings → Privacy & Security → Screen & System Audio Recording, bật "Phu de hop", rồi thoát và mở lại app.';
+  'macOS chưa cho phép thu âm thanh hệ thống. Vào System Settings → Privacy & Security → Screen & System Audio Recording, bật "Translator", rồi thoát và mở lại app.';
 const MAC_MIC_PERMISSION =
-  'Micro đang bị chặn. Vào System Settings → Privacy & Security → Microphone, bật "Phu de hop", rồi mở lại app.';
+  'Micro đang bị chặn. Vào System Settings → Privacy & Security → Microphone, bật "Translator", rồi mở lại app.';
 
 function friendlyMediaError(err, kind, platform) {
   const name = err && err.name;

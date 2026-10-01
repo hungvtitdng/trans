@@ -188,15 +188,12 @@ main > * {
   flex-shrink: 0;
 }
 
-/* Màn phụ đề */
+/* Màn phụ đề: chỉ câu đang nói; các câu đã xong nằm ở mục Song ngữ bên dưới. */
 .stage {
   background: var(--stage-bg);
   color: var(--stage-text);
   border-radius: 14px;
-  padding: 20px 22px 14px;
-  /* Chiếm hết phần còn trống của cửa sổ; lịch sử câu cuộn bên trong nên không làm khung cao thêm. */
-  flex: 1 0 280px;
-  min-height: 280px;
+  padding: 18px 22px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -206,50 +203,10 @@ main > * {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #262a33;
 }
 .stage p {
   margin: 0;
   overflow-wrap: anywhere;
-}
-.history {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.history li {
-  padding: 6px 0;
-  border-top: 1px solid #1e2129;
-  animation: push-in 220ms ease-out;
-}
-@keyframes push-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .history li {
-    animation: none;
-  }
-}
-.history li:first-child {
-  border-top: none;
-}
-/* Câu cũ: nhỏ và nhạt để mắt tập trung vào dòng vàng. */
-.history .tr {
-  font-size: calc(var(--text-size) - 1px);
-  line-height: 1.35;
-  color: #c3c7cf;
-}
-.history .src {
-  color: var(--stage-muted);
-  font-size: 12px;
-  margin-top: 1px;
 }
 .source-line {
   color: var(--stage-muted);
@@ -331,12 +288,16 @@ input[type='range'] {
   accent-color: var(--accent);
 }
 
-/* Biên bản */
+/* Song ngữ: chiếm hết phần còn trống của cửa sổ, danh sách cuộn bên trong. */
 .transcript {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 14px;
+  flex: 1 1 0;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
 }
 .transcript-head {
   display: flex;
@@ -358,7 +319,8 @@ input[type='range'] {
   list-style: none;
   margin: 10px 0 0;
   padding: 0;
-  max-height: 340px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 .transcript-list li {
@@ -367,6 +329,18 @@ input[type='range'] {
   gap: 10px;
   padding: 8px 0;
   border-top: 1px solid var(--border);
+  animation: push-in 220ms ease-out;
+}
+@keyframes push-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .transcript-list li {
+    animation: none;
+  }
 }
 .transcript-list li:first-child {
   border-top: none;
@@ -384,10 +358,11 @@ input[type='range'] {
 }
 .transcript-list .src {
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(var(--text-size) - 3px);
+  margin-top: 2px;
 }
 .transcript-list .tr {
-  font-size: 15px;
+  font-size: var(--text-size);
 }
 .transcript-list .tr.pending {
   color: var(--muted);
@@ -416,13 +391,14 @@ dialog {
   background: var(--panel);
   color: var(--text);
   padding: 0;
-  width: min(560px, calc(100vw - 24px));
+  width: min(640px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
 }
 dialog::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
 .settings {
-  padding: 18px 20px;
+  padding: 18px 20px 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -512,9 +488,16 @@ label.check {
 .key-clear:focus-visible {
   opacity: 1;
 }
+/* Luôn thấy nút "Xong" ở đáy hộp, không phải cuộn xuống. */
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
+  position: sticky;
+  bottom: 0;
+  margin: 0 -20px;
+  padding: 12px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
 }
 
 @media (max-width: 560px) {
@@ -526,7 +509,6 @@ label.check {
     width: 100%;
   }
   .stage {
-    min-height: 200px;
     padding: 14px;
   }
 }

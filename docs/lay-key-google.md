@@ -1,4 +1,4 @@
-# Lấy key Google Cloud cho "Phụ đề họp"
+# Lấy key Google Cloud cho "Translator"
 
 App không có server trung gian: mọi yêu cầu đi thẳng từ máy bạn tới Google bằng key của chính bạn, và Google tính phí vào project của bạn. Làm một lần, mất khoảng 10 phút.
 
@@ -6,7 +6,7 @@ App không có server trung gian: mọi yêu cầu đi thẳng từ máy bạn t
 
 1. Vào <https://console.cloud.google.com/> và đăng nhập.
 2. Ở thanh trên cùng, bấm chọn project → **New Project**.
-3. Đặt tên (ví dụ `phu-de-hop`) → **Create**. Nhớ chọn project vừa tạo trước khi làm các bước sau.
+3. Đặt tên (ví dụ `translator`) → **Create**. Nhớ chọn project vừa tạo trước khi làm các bước sau.
 
 ## 2. Gắn thanh toán (Billing)
 

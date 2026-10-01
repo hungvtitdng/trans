@@ -1,18 +1,18 @@
 {
-  "name": "phu-de-hop",
-  "productName": "Phu de hop",
+  "name": "translator",
+  "productName": "Translator",
   "version": "0.1.0",
   "description": "Phụ đề dịch realtime cho cuộc họp, dùng key Google Cloud của chính bạn.",
   "main": "src/main/main.js",
   "license": "MIT",
   "author": {
-    "name": "your-org",
+    "name": "hungvtitdng",
     "email": "your-email@example.com"
   },
-  "homepage": "https://github.com/your-org/phu-de-hop",
+  "homepage": "https://github.com/hungvtitdng/trans",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/phu-de-hop.git"
+    "url": "https://github.com/hungvtitdng/trans.git"
   },
   "scripts": {
     "start": "electron .",
@@ -24,9 +24,9 @@
     "dist:linux": "electron-builder --linux"
   },
   "build": {
-    "appId": "io.github.your-org.phudehop",
-    "productName": "Phu de hop",
-    "artifactName": "phu-de-hop-${version}-${os}-${arch}.${ext}",
+    "appId": "io.github.hungvtitdng.translator",
+    "productName": "Translator",
+    "artifactName": "translator-${version}-${os}-${arch}.${ext}",
     "files": [
       "src/**/*",
       "package.json",
@@ -35,8 +35,8 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "your-org",
-        "repo": "phu-de-hop"
+        "owner": "hungvtitdng",
+        "repo": "trans"
       }
     ],
     "win": {
@@ -69,9 +69,9 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Phu de hop cần micro để nhận dạng giọng nói và hiện phụ đề.",
-        "NSAudioCaptureUsageDescription": "Phu de hop cần thu âm thanh máy tính để hiện phụ đề cho cuộc họp.",
-        "NSScreenCaptureUsageDescription": "Phu de hop cần quyền ghi màn hình và âm thanh hệ thống để thu âm thanh cuộc họp (không lưu hình ảnh)."
+        "NSMicrophoneUsageDescription": "Translator cần micro để nhận dạng giọng nói và hiện phụ đề.",
+        "NSAudioCaptureUsageDescription": "Translator cần thu âm thanh máy tính để hiện phụ đề cho cuộc họp.",
+        "NSScreenCaptureUsageDescription": "Translator cần quyền ghi màn hình và âm thanh hệ thống để thu âm thanh cuộc họp (không lưu hình ảnh)."
       }
     },
     "linux": {
@@ -80,7 +80,7 @@
         "deb"
       ],
       "category": "AudioVideo",
-      "maintainer": "your-org <your-email@example.com>"
+      "maintainer": "hungvtitdng <your-email@example.com>"
     }
   },
   "dependencies": {

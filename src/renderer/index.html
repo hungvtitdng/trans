@@ -7,7 +7,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob: mediastream:; connect-src 'self'; object-src 'none'; base-uri 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Phụ đề họp</title>
+    <title>Translator</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -34,7 +34,6 @@
           <p class="current-line" id="currentLine"></p>
           <p class="source-line" id="sourceLine">Bấm “Bắt đầu” để hiện phụ đề.</p>
         </div>
-        <ol class="history" id="history" aria-label="Các câu trước"></ol>
         <div class="stage-foot">
           <div class="meter" title="Mức âm lượng"><div class="meter-fill" id="meterFill"></div></div>
           <button type="button" id="overlayBtn" class="btn ghost">Phụ đề nổi</button>
@@ -45,7 +44,7 @@
 
       <section class="transcript">
         <div class="transcript-head">
-          <h2>Biên bản song ngữ</h2>
+          <h2>Song ngữ</h2>
           <div class="transcript-actions">
             <button type="button" class="btn small" id="copyBtn">Sao chép</button>
             <button type="button" class="btn small" id="saveTxtBtn">Lưu .txt</button>
@@ -55,13 +54,13 @@
         </div>
         <ol class="transcript-list" id="transcriptList">
           <li class="example">
-            <time>09:00:05</time>
-            <div><p class="src">Good morning everyone, let's get started.</p><p class="tr">Chào buổi sáng mọi người, chúng ta bắt đầu nhé.</p></div>
+            <time>09:00:11</time>
+            <div><p class="tr">Trước tiên, cập nhật nhanh về lịch phát hành.</p><p class="src">First, a quick update on the release schedule.</p></div>
             <span class="tag">ví dụ</span>
           </li>
           <li class="example">
-            <time>09:00:11</time>
-            <div><p class="src">First, a quick update on the release schedule.</p><p class="tr">Trước tiên, cập nhật nhanh về lịch phát hành.</p></div>
+            <time>09:00:05</time>
+            <div><p class="tr">Chào buổi sáng mọi người, chúng ta bắt đầu nhé.</p><p class="src">Good morning everyone, let's get started.</p></div>
             <span class="tag">ví dụ</span>
           </li>
         </ol>
@@ -130,7 +129,7 @@
               </button>
             </span>
           </label>
-          <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/lay-key-google.md" class="ext-link">Hướng dẫn lấy key</a>
+          <a href="https://github.com/hungvtitdng/trans/blob/main/docs/lay-key-google.md" class="ext-link">Hướng dẫn lấy key</a>
         </fieldset>
 
         <fieldset>
@@ -146,7 +145,7 @@
           </label>
           <div class="row whisper-only">
             <button type="button" class="btn" id="chooseWhisperModelBtn">Chọn file model…</button>
-            <a href="https://github.com/your-org/phu-de-hop/blob/main/docs/whisper.md" class="ext-link">Hướng dẫn whisper</a>
+            <a href="https://github.com/hungvtitdng/trans/blob/main/docs/whisper.md" class="ext-link">Hướng dẫn whisper</a>
           </div>
           <p class="key-summary whisper-only" id="whisperStatus"></p>
           <label class="google-only">Model nhận dạng

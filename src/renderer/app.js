@@ -9,7 +9,6 @@ const el = {
   status: $('status'),
   startBtn: $('startBtn'),
   settingsBtn: $('settingsBtn'),
-  history: $('history'),
   sourceLine: $('sourceLine'),
   currentLine: $('currentLine'),
   meterFill: $('meterFill'),
@@ -41,8 +40,6 @@ document.documentElement.dataset.platform = platform; // styles.css chừa chỗ
 let running = false;
 let busy = false;
 let lastShownId = 0;
-let shown = null; // câu dịch đang hiện ở trên cùng: { text, source }
-const HISTORY_LIMIT = 200; // biên bản giữ đủ; ở đây chỉ để đọc lại gần
 const rows = new Map();
 
 const capture = new AudioCapture({
@@ -187,31 +184,12 @@ function addRow(id, time, text) {
   const tr = document.createElement('p');
   tr.className = 'tr pending';
   tr.textContent = 'Đang dịch…';
-  body.append(src, tr);
+  body.append(tr, src); // bản dịch ở trên, câu gốc ở dưới
   li.append(t, body);
-  el.list.append(li);
+  // Câu mới nhất ở trên; đang cuộn xuống đọc câu cũ thì trình duyệt tự giữ chỗ (scroll anchoring).
+  // File .txt/.srt vẫn theo thứ tự thời gian.
+  el.list.prepend(li);
   rows.set(id, tr);
-  const nearBottom = el.list.scrollHeight - el.list.scrollTop - el.list.clientHeight < 80;
-  if (nearBottom) el.list.scrollTop = el.list.scrollHeight;
-}
-
-// Câu mới nhất ở trên. Khi đang cuộn xuống đọc câu cũ, trình duyệt tự giữ chỗ đang đọc (scroll anchoring).
-function pushHistory({ text, source }) {
-  const li = document.createElement('li');
-  const tr = document.createElement('p');
-  tr.className = 'tr';
-  tr.textContent = text;
-  const src = document.createElement('p');
-  src.className = 'src';
-  src.textContent = source;
-  li.append(tr, src);
-  el.history.prepend(li);
-  while (el.history.children.length > HISTORY_LIMIT) el.history.lastElementChild.remove();
-}
-
-function commitShown() {
-  if (shown) pushHistory(shown);
-  shown = null;
 }
 
 api.onCaption((msg) => {
@@ -220,8 +198,6 @@ api.onCaption((msg) => {
       el.sourceLine.textContent = msg.text;
       break;
     case 'interimTranslation':
-      // Câu mới bắt đầu thế chỗ dòng vàng: đẩy câu vừa xong xuống lịch sử ngay, không để nó biến mất.
-      commitShown();
       el.currentLine.textContent = msg.text;
       el.currentLine.classList.add('interim');
       break;
@@ -237,8 +213,6 @@ api.onCaption((msg) => {
       }
       if (msg.id > lastShownId) {
         lastShownId = msg.id;
-        commitShown();
-        shown = { text: msg.text, source: tr ? tr.previousElementSibling.textContent : '' };
         el.currentLine.textContent = msg.text;
         el.currentLine.classList.remove('interim');
       }
@@ -309,9 +283,7 @@ $('clearBtn').addEventListener('click', async () => {
   await api.clearTranscript();
   el.list.replaceChildren();
   rows.clear();
-  el.history.replaceChildren();
   el.currentLine.textContent = '';
-  shown = null;
 });
 
 // ---------- Cài đặt ----------

@@ -42,7 +42,7 @@ test('lỗi Google được dịch sang tiếng Việt', () => {
 });
 
 test('settings mã hoá key, quyền 0600, tóm tắt không lộ key', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phudehop-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'translator-'));
   const file = path.join(dir, 'settings.json');
   const fakeSafe = {
     isEncryptionAvailable: () => true,
