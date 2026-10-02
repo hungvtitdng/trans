@@ -155,7 +155,21 @@
               <option value="default">default</option>
             </select>
           </label>
-          <label class="check">
+          <label>Dịch bằng
+            <select id="translator">
+              <option value="google">Google Translate (tính phí)</option>
+              <option value="claude">Claude CLI</option>
+              <option value="codex">Codex CLI</option>
+            </select>
+          </label>
+          <label class="claude-only">Model Claude
+            <input type="text" id="claudeModel" spellcheck="false" placeholder="haiku" />
+          </label>
+          <label class="codex-only">Model Codex
+            <input type="text" id="codexModel" spellcheck="false" placeholder="trống = theo ~/.codex/config.toml" />
+          </label>
+          <p class="key-summary llm-only" id="translatorStatus"></p>
+          <label class="check gtranslate-only">
             <input type="checkbox" id="interimTranslate" />
             Dịch tạm khi người nói chưa hết câu
           </label>

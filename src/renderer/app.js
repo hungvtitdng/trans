@@ -30,6 +30,10 @@ const el = {
   whisperUrl: $('whisperUrl'),
   whisperStatus: $('whisperStatus'),
   model: $('model'),
+  translator: $('translator'),
+  claudeModel: $('claudeModel'),
+  codexModel: $('codexModel'),
+  translatorStatus: $('translatorStatus'),
   interimTranslate: $('interimTranslate'),
   speechPrice: $('speechPrice'),
   translatePrice: $('translatePrice'),
@@ -117,7 +121,7 @@ function clearExamples() {
 async function start() {
   hideError();
   const s = await api.getSettings();
-  if (!s.summary.configured) {
+  if (s.needsKey && !s.summary.configured) {
     showError('Chưa có key Google Cloud. Hãy nhập key trong Cài đặt.');
     openSettings();
     return;
@@ -303,9 +307,10 @@ async function openSettings() {
   const s = await api.getSettings();
   renderSummary(s.summary);
   el.whisperStatus.textContent = s.whisperStatus;
+  el.translatorStatus.textContent = s.translatorStatus;
   if (!el.dialog.open) el.dialog.showModal();
   // Nhóm "Âm thanh và ngôn ngữ" đứng đầu nên tự nhận focus; chưa có key thì đưa con trỏ vào ô key.
-  if (!s.summary.configured) el.apiKeyInput.focus();
+  if (s.needsKey && !s.summary.configured) el.apiKeyInput.focus();
 }
 
 // Dán là lưu: chờ ngừng gõ một nhịp rồi lưu. Key vẫn nằm trong ô (ẩn) tới khi đóng app.
@@ -369,6 +374,21 @@ $('chooseWhisperModelBtn').addEventListener('click', async () => {
   refreshWhisperStatus();
 });
 el.model.addEventListener('change', () => api.setPrefs({ model: el.model.value }));
+
+function showTranslatorFields() {
+  const t = el.translator.value;
+  document.querySelectorAll('.claude-only').forEach((n) => (n.hidden = t !== 'claude'));
+  document.querySelectorAll('.codex-only').forEach((n) => (n.hidden = t !== 'codex'));
+  document.querySelectorAll('.llm-only').forEach((n) => (n.hidden = t === 'google'));
+  document.querySelectorAll('.gtranslate-only').forEach((n) => (n.hidden = t !== 'google'));
+}
+el.translator.addEventListener('change', async () => {
+  showTranslatorFields();
+  await api.setPrefs({ translator: el.translator.value });
+  el.translatorStatus.textContent = (await api.getSettings()).translatorStatus;
+});
+el.claudeModel.addEventListener('change', () => api.setPrefs({ claudeModel: el.claudeModel.value.trim() || 'haiku' }));
+el.codexModel.addEventListener('change', () => api.setPrefs({ codexModel: el.codexModel.value.trim() }));
 el.interimTranslate.addEventListener('change', () => api.setPrefs({ interimTranslate: el.interimTranslate.checked }));
 el.speechPrice.addEventListener('change', () => {
   const v = Number(el.speechPrice.value);
@@ -400,11 +420,15 @@ async function init() {
   showEngineFields();
   el.whisperUrl.value = p.whisperUrl;
   el.model.value = p.model;
+  el.translator.value = p.translator;
+  el.claudeModel.value = p.claudeModel;
+  el.codexModel.value = p.codexModel;
+  showTranslatorFields();
   el.interimTranslate.checked = p.interimTranslate;
   el.speechPrice.value = p.speechPricePerMin;
   el.translatePrice.value = p.translatePricePerMillion;
   updatePair();
-  if (!s.summary.configured) openSettings();
+  if (s.needsKey && !s.summary.configured) openSettings();
   refreshUsage();
   setInterval(refreshUsage, 2000);
   await refreshDevices(p.deviceId);
