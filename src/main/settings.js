@@ -8,6 +8,9 @@ const DEFAULT_PREFS = {
   whisperUrl: 'http://127.0.0.1:8080',
   whisperModel: '', // đường dẫn file ggml-*.bin; trống = người dùng tự chạy whisper-server
   model: 'latest_long',
+  translator: 'google', // 'google' | 'claude' | 'codex' (xem translators.js)
+  claudeModel: 'haiku',
+  codexModel: '', // trống = model mặc định trong ~/.codex/config.toml
   interimTranslate: true,
   speechPricePerMin: 0.016,
   translatePricePerMillion: 20,

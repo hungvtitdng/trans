@@ -21,6 +21,8 @@ const { SttSession } = require('./stt');
 const whisper = require('./whisper');
 const { WhisperSession } = whisper;
 const google = require('./google');
+const translators = require('./translators');
+const llm = require('./llm');
 const { SettingsStore } = require('./settings');
 const transcript = require('./transcript');
 
@@ -189,19 +191,31 @@ function interimLongEnough(text) {
   return /\s/.test(text) ? text.split(/\s+/).length >= INTERIM_MIN_WORDS : text.length >= 8;
 }
 
+// Cần key Google khi nhận dạng hoặc dịch bằng Google.
+function needsKey(prefs) {
+  return prefs.engine !== 'whisper' || translators.get(prefs.translator).needsKey;
+}
+
 function startSession({ speakerLang, targetLang }) {
   stopSession();
-  let auth;
-  try {
-    auth = settings.getAuth();
-  } catch {
-    return { error: 'Không giải mã được key đã lưu. Hãy nhập lại key trong Cài đặt.' };
-  }
-  if (!auth) return { error: 'Chưa có key Google Cloud. Mở Cài đặt để nhập key.' };
-
   const prefs = settings.prefs;
+  let auth = null;
+  if (needsKey(prefs)) {
+    try {
+      auth = settings.getAuth();
+    } catch {
+      return { error: 'Không giải mã được key đã lưu. Hãy nhập lại key trong Cài đặt.' };
+    }
+    if (!auth) return { error: 'Chưa có key Google Cloud. Mở Cài đặt để nhập key.' };
+  }
+
   langs = { from: google.toTranslateLang(speakerLang), to: targetLang };
-  translator = google.createTranslator(auth);
+  const adapter = translators.get(prefs.translator);
+  try {
+    translator = adapter.create({ auth, prefs, workDir: path.join(app.getPath('userData'), 'llm') });
+  } catch (err) {
+    return { error: adapter.friendlyError(err) };
+  }
   const tr = translator;
   const s =
     prefs.engine === 'whisper'
@@ -214,7 +228,7 @@ function startSession({ speakerLang, targetLang }) {
 
   s.on('interim', (text) => {
     broadcast({ type: 'interim', text });
-    if (!prefs.interimTranslate || !interimLongEnough(text)) return;
+    if (!prefs.interimTranslate || !tr.interim || !interimLongEnough(text)) return;
     const now = Date.now();
     if (now - lastInterimTranslateAt < INTERIM_MIN_GAP_MS) return;
     lastInterimTranslateAt = now;
@@ -236,7 +250,7 @@ function startSession({ speakerLang, targetLang }) {
         entry.translation = t;
         broadcast({ type: 'translated', id: entry.id, text: t });
       })
-      .catch((err) => broadcast({ type: 'translateError', id: entry.id, message: google.friendlyError(err) }));
+      .catch((err) => broadcast({ type: 'translateError', id: entry.id, message: adapter.friendlyError(err) }));
   });
 
   s.on('error', (err) => {
@@ -247,6 +261,7 @@ function startSession({ speakerLang, targetLang }) {
   s.on('stopped', () => {
     if (s instanceof SttSession) usedAudioMs += s.audioMs; // Whisper chạy trên máy, không tính phí
     usedChars += tr.chars;
+    if (tr.close) tr.close();
     if (stt === s) {
       stt = null;
       translator = null;
@@ -257,6 +272,8 @@ function startSession({ speakerLang, targetLang }) {
   try {
     s.start();
   } catch (err) {
+    if (tr.close) tr.close();
+    translator = null;
     return { error: google.friendlyError(err) };
   }
   stt = s;
@@ -282,6 +299,8 @@ function registerIpc() {
     prefs: settings.prefs,
     platform: process.platform,
     whisperStatus: whisperStatus(),
+    translatorStatus: translators.get(settings.prefs.translator).status(),
+    needsKey: needsKey(settings.prefs),
   }));
   ipcMain.handle('settings:setPrefs', (_e, partial) => {
     const prefs = settings.setPrefs(partial);
@@ -386,6 +405,7 @@ app.whenReady().then(() => {
 
 app.on('will-quit', () => {
   if (whisperProc) whisperProc.kill();
+  llm.stopAll();
 });
 
 app.on('window-all-closed', () => {
